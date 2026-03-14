@@ -1,6 +1,6 @@
 # Usage
 
-Inline icons from [Iconify](https://iconify.design) — over 200,000 icons from 100+ icon sets, resolved at build time.
+Inline icons from [Iconify](https://iconify.design) - over 200,000 icons from 100+ icon sets.
 
 ## The `{icon}` role
 
@@ -18,27 +18,36 @@ Browse available icons at [icon-sets.iconify.design](https://icon-sets.iconify.d
 
 ### Default prefix
 
-Icons without a prefix default to Material Design Icons (`mdi`):
+Icons without a prefix default to [Material Design Icons](https://icon-sets.iconify.design/mdi/) (`mdi`), a general-purpose set with ~7,200 icons covering common UI actions, objects, and symbols:
 
 :::::{myst:demo}
 - {icon}`home` Home
 - {icon}`star` Star
+- {icon}`cog` Settings
+- {icon}`magnify` Search
 :::::
 
-### Popular icon sets
+### Brand logos
+
+Brand and project logos are **not** included in the default `mdi` set.
+Use the [`simple-icons`](https://icon-sets.iconify.design/simple-icons/) or [`logos`](https://icon-sets.iconify.design/logos/) prefix instead:
 
 :::::{myst:demo}
-**Material Design Icons** (`mdi`):
-{icon}`mdi:check-circle` {icon}`mdi:alert` {icon}`mdi:information` {icon}`mdi:close-circle`
+**Simple Icons** (`simple-icons`) - monochrome brand icons:
+{icon}`simple-icons:python` {icon}`simple-icons:jupyter` {icon}`simple-icons:github` {icon}`simple-icons:numpy`
 
+**Logos** (`logos`) - full-color brand logos:
+{icon}`logos:python` {icon}`logos:jupyter` {icon}`logos:react` {icon}`logos:github-icon`
+:::::
+
+### Other popular icon sets
+
+:::::{myst:demo}
 **Font Awesome** (`fa6-solid`):
 {icon}`fa6-solid:star` {icon}`fa6-solid:heart` {icon}`fa6-solid:bell` {icon}`fa6-solid:gear`
 
 **Lucide** (`lucide`):
 {icon}`lucide:rocket` {icon}`lucide:zap` {icon}`lucide:globe` {icon}`lucide:terminal`
-
-**Brand Logos** (`logos`):
-{icon}`logos:python` {icon}`logos:jupyter` {icon}`logos:react` {icon}`logos:github-icon`
 :::::
 
 ### Inline in text
@@ -53,9 +62,3 @@ Icons render inline: click the {icon}`mdi:cog` settings icon, then look for the 
 [{icon}`mdi:github` Source code](https://github.com/jupyter-book/myst-iconify)
 [{icon}`mdi:book-open-variant` Documentation](https://mystmd.org)
 :::::
-
-## How it works
-
-Icons are fetched from the [Iconify API](https://api.iconify.design) **at build time** and embedded as inline SVGs. No runtime CDN dependency — the SVGs are baked into your site's HTML.
-
-Results are cached in `_build/cache/iconify/`.

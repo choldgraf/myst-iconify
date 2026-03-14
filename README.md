@@ -1,7 +1,8 @@
 # myst-iconify
 
 MyST plugin to render inline icons via the [Iconify API](https://iconify.design).
-Provides access to 200,000+ icons from 100+ icon sets (Material Design, FontAwesome, etc.).
+This is a lightweight service that connects with many different icon sets out there.
+It provides access to 200,000+ icons from 100+ icon sets (Material Design, FontAwesome, etc.).
 
 ## Installation
 
@@ -44,4 +45,4 @@ npm run build
 
 ## Development
 
-Icons are fetched from the Iconify API at build time and cached locally in `_build/cache/iconify/`.
+Icons are fetched from the [Iconify API](https://api.iconify.design) **at build time**, then cached/embedded as inline SVGs that are base64-encoded.

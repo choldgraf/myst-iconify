@@ -27,7 +27,7 @@ npm run build
 
 ## Caching
 
-Icons fetched from the Iconify API are cached in `_build/cache/iconify/`. Cached icons are reused indefinitely — delete the cache directory to re-fetch:
+Icons fetched from the Iconify API are cached in `_build/cache/iconify/`. Cached icons are reused indefinitely - delete the cache directory to re-fetch:
 
 ```bash
 rm -rf _build/cache/iconify/
