@@ -14,7 +14,7 @@ await esbuild.build({
   external: ['crypto', 'fs', 'path'],
   banner: {
     js: `// Iconify Plugin for MyST
-// Bundled version - see https://github.com/jupyter-book/myst-iconify
+// Bundled version - see https://github.com/choldgraf/myst-iconify
 // Generated: ${new Date().toISOString()}
 `
   }

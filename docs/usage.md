@@ -59,6 +59,6 @@ Icons render inline: click the {icon}`mdi:cog` settings icon, then look for the 
 ### As linked icons
 
 :::::{myst:demo}
-[{icon}`mdi:github` Source code](https://github.com/jupyter-book/myst-iconify)
+[{icon}`mdi:github` Source code](https://github.com/choldgraf/myst-iconify)
 [{icon}`mdi:book-open-variant` Documentation](https://mystmd.org)
 :::::

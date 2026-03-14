@@ -3,17 +3,14 @@ version: 1
 project:
   id: myst-iconify
   title: myst-iconify
-  github: https://github.com/jupyter-book/myst-iconify
-
+  github: https://github.com/choldgraf/myst-iconify
   plugins:
     - src/index.mjs
     - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/demo/src/index.mjs
 
   toc:
     - file: docs/index.md
-    - file: README.md
     - file: docs/usage.md
-    - file: docs/configuration.md
 
 site:
   template: book-theme

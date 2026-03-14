@@ -6,20 +6,20 @@ It provides access to 200,000+ icons from 100+ icon sets (Material Design, FontA
 
 ## Installation
 
-Add to your `myst.yml`:
+Add the plugin to your `myst.yml` - this always uses the latest release:
 
 ```yaml
 project:
   plugins:
-    - path/to/myst-iconify/src/index.mjs
+    - https://github.com/choldgraf/myst-iconify/releases/latest/download/index.mjs
 ```
 
-Or use the bundled version:
+To pin a specific version, use the release tag:
 
 ```yaml
 project:
   plugins:
-    - path/to/myst-iconify/dist/index.mjs
+    - https://github.com/choldgraf/myst-iconify/releases/download/v0.1.0/index.mjs
 ```
 
 ## Usage
@@ -35,6 +35,32 @@ Use the `{icon}` role with an Iconify icon identifier (`prefix:name`):
 ```
 
 Browse available icons at https://icon-sets.iconify.design
+
+## Adding the plugin
+
+Add the plugin to your `myst.yml` - the config below always uses the latest release:
+
+```yaml
+project:
+  plugins:
+    - https://github.com/choldgraf/myst-iconify/releases/latest/download/index.mjs
+```
+
+To pin a specific version, use the release tag:
+
+```yaml
+project:
+  plugins:
+    - https://github.com/choldgraf/myst-iconify/releases/download/v0.1.0/index.mjs
+```
+
+## Caching
+
+Icons fetched from the Iconify API are cached in `_build/cache/iconify/`. Delete the cache directory to re-fetch:
+
+```bash
+rm -rf _build/cache/iconify/
+```
 
 ## Building
 
