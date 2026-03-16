@@ -15,6 +15,12 @@ function selectAll(type, tree) {
 }
 const utils = { selectAll };
 
+// Helper to extract the base64 SVG from a span node's backgroundImage style
+function decodeSvg(node) {
+  const match = node.style.backgroundImage.match(/base64,(.+?)"/);
+  return Buffer.from(match[1], 'base64').toString();
+}
+
 describe('icon role', () => {
   it('parses prefix:name format', () => {
     const [node] = role.run({ body: 'fa6-solid:gear' });
@@ -30,19 +36,23 @@ describe('icon role', () => {
     const [node] = role.run({ body: '  mdi:home  ' });
     expect(node.key).toBe('mdi:home');
   });
+
+  it('passes color option to placeholder', () => {
+    const [node] = role.run({ body: 'mdi:home', options: { color: 'red' } });
+    expect(node.color).toBe('red');
+  });
 });
 
 describe('iconify-resolve transform', () => {
-  it('replaces placeholder with image node on success', async () => {
+  it('replaces placeholder with span node on success', async () => {
     const tree = {
       type: 'root',
       children: [{ type: 'iconifyPlaceholder', key: 'mdi:home' }],
     };
     await transform.plugin(null, utils)(tree);
     const node = tree.children[0];
-    expect(node.type).toBe('image');
-    expect(node.url).toMatch(/^data:image\/svg\+xml;base64,/);
-    expect(node.alt).toBe('mdi:home');
+    expect(node.type).toBe('span');
+    expect(node.style.backgroundImage).toMatch(/data:image\/svg\+xml;base64,/);
   });
 
   it('falls back to text and warns for invalid icon', async () => {
@@ -59,6 +69,19 @@ describe('iconify-resolve transform', () => {
       expect.stringContaining('could not fetch icon "mdi:this-icon-does-not-exist-xyz"'),
     );
     warn.mockRestore();
+  });
+
+  it('applies color to SVG when specified', async () => {
+    const tree = {
+      type: 'root',
+      children: [{ type: 'iconifyPlaceholder', key: 'mdi:home', color: 'red' }],
+    };
+    await transform.plugin(null, utils)(tree);
+    const node = tree.children[0];
+    expect(node.type).toBe('span');
+    const svg = decodeSvg(node);
+    expect(svg).toContain('red');
+    expect(svg).not.toContain('currentColor');
   });
 
   it('skips trees with no placeholders', async () => {

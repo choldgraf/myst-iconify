@@ -5,8 +5,9 @@
 // How it works:
 //   1. The {icon} role emits a placeholder node during parsing.
 //   2. The transform collects all placeholders, fetches SVGs from the
-//      Iconify API, and replaces each placeholder
-//      with an inline image node using a base64 data URI.
+//      Iconify API, and replaces each placeholder with an inline span
+//      using a background-image data URI. We use span (not image) because
+//      MyST's image renderer strips inline styles, but spans preserve them.
 //   3. We generally keep the styles etc the same as what iconify returns.
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -45,11 +46,13 @@ const plugin = {
   roles: [
     {
       name: 'icon',
-      doc: 'Inline icon from Iconify (e.g. {icon}`mdi:home` or {icon}`home`).',
+      doc: 'Inline icon from Iconify. Usage: {icon}`mdi:home` or {icon color=red}`home`',
       body: { type: String, required: true },
+      options: {
+        color: { type: String, doc: 'CSS color for the icon (e.g. red, #ff0000).' },
+      },
       run(data) {
-        // This is a placeholder - the transform resolves it to an actual image.
-        return [{ type: 'iconifyPlaceholder', key: normalize(data.body) }];
+        return [{ type: 'iconifyPlaceholder', key: normalize(data.body), color: data.options?.color }];
       },
     },
   ],
@@ -66,22 +69,32 @@ const plugin = {
         const svgs = {};
         await Promise.all(keys.map(async (k) => { svgs[k] = await fetchIcon(k); }));
 
-        // Replace each placeholder in-place with an image node that's base64-encoded
+        // Replace each placeholder in-place with a styled span node.
         for (const node of nodes) {
-          const { key } = node;
+          const { key, color } = node;
           const svg = svgs[key];
           Object.keys(node).forEach((k) => delete node[k]);
           if (!svg) {
             console.warn(`⚠️  iconify: could not fetch icon "${key}" - check the name at https://icon-sets.iconify.design`);
             Object.assign(node, { type: 'text', value: `[${key}]` });
           } else {
-            const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+            // If a color was specified, replace currentColor in the SVG before encoding.
+            const finalSvg = color ? svg.replace(/currentColor/g, color) : svg;
+            const dataUri = `data:image/svg+xml;base64,${Buffer.from(finalSvg).toString('base64')}`;
             Object.assign(node, {
-              type: 'image',
-              url: dataUri,
-              alt: key,
+              // We use a span because image nodes will get styled in weird ways by myst theme
+              type: 'span',
               class: 'iconify-icon',
-              style: { display: 'inline', verticalAlign: 'middle', width: '1.2em', height: '1.2em' },
+              style: {
+                display: 'inline-block',
+                verticalAlign: '-0.125em',
+                width: '1em',
+                height: '1em',
+                backgroundImage: `url("${dataUri}")`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+              },
+              children: [],
             });
           }
         }

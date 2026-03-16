@@ -4,6 +4,12 @@ MyST plugin to render inline icons via the [Iconify API](https://iconify.design)
 This is a lightweight service that connects with many different icon sets out there.
 It provides access to 200,000+ icons from 100+ icon sets (Material Design, FontAwesome, etc.).
 
+> [!NOTE]
+> 
+> Right now, this will embed a base64 encoded image for each icon.
+> Each is small (about .2-1kb per icon, depending on its complexity), but eventually we'd like to include these are files and re-use them.
+> See this [issue on plugins defining their own outputs](https://github.com/jupyter-book/mystmd/issues/2714) and when it is resolved we'll implement that here.
+
 ## Installation
 
 Add the plugin to your `myst.yml` - this always uses the latest release:
