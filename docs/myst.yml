@@ -14,4 +14,6 @@ project:
     - file: usage.md
 
 site:
+  options:
+    logo_text: myst-iconify
   template: book-theme
