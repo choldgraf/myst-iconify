@@ -12,5 +12,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-      - run: npm install
-      - run: npx vitest run
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx nox -s test

@@ -4,7 +4,7 @@ on:
     types: [published]
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -13,9 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-      - run: npm install
-      - run: npx vitest run
-      - run: npm run build
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx nox -s test build
       - name: Attach built plugin to release
         env:
           GH_TOKEN: ${{ github.token }}
