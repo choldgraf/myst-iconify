@@ -2,3 +2,4 @@ dist/
 node_modules/
 _build/
 __pycache__/
+.nox/

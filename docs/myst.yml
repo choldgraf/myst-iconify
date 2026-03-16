@@ -5,12 +5,13 @@ project:
   title: myst-iconify
   github: https://github.com/choldgraf/myst-iconify
   plugins:
-    - src/index.mjs
+    - ../src/index.mjs
+    - ./plugins/check-cross-plugin.mjs
     - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/demo/src/index.mjs
 
   toc:
-    - file: docs/index.md
-    - file: docs/usage.md
+    - file: index.md
+    - file: usage.md
 
 site:
   template: book-theme
