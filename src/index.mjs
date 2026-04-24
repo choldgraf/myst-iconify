@@ -1,14 +1,23 @@
-// Iconify Plugin for MyST
-// Renders inline icons from the Iconify API.
-// Browse icons at https://icon-sets.iconify.design
+// MyST plugin that renders inline Iconify icons.
+// https://icon-sets.iconify.design
 //
-// How it works:
-//   1. The {icon} role emits a placeholder node during parsing.
-//   2. The transform collects all placeholders, fetches SVGs from the
-//      Iconify API, and replaces each placeholder with an inline span
-//      using a background-image data URI. We use span (not image) because
-//      MyST's image renderer strips inline styles, but spans preserve them.
-//   3. We generally keep the styles etc the same as what iconify returns.
+// Pipeline:
+//   1. The `{icon}` role emits an `iconifyPlaceholder` node.
+//   2. The transform fetches each SVG (disk-cached) and replaces placeholders
+//      with rendered icon spans (see `buildIconNode`).
+//   3. A pass over `link` nodes vertically centers any icon inside a link, and
+//      promotes icon-only links to button-styled clickable icons.
+//
+// Two render paths in `buildIconNode`:
+//   * Mono icons (SVGs with `fill="currentColor"`) render as a CSS mask on the
+//     span, so the icon inherits the parent's text color and follows the theme.
+//   * Colored icons (e.g. `logos:python`) render as a regular `<img>` so their
+//     baked-in colors survive.
+//
+// In both paths the span contains an `<img>` (zero-sized for mono). The hidden
+// img on the mono path is what lets the myst-theme rule
+// `a:has(img) > .link-icon { display:none }` keep suppressing external-link
+// arrows on `[{icon}](url)` — the plugin ships no CSS of its own.
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
@@ -17,8 +26,14 @@ const ICONIFY_API = 'https://api.iconify.design';
 const DEFAULT_PREFIX = 'mdi';
 const CACHE_DIR = '_build/cache/iconify';
 
-// Normalize role input to "prefix:name"
-// If no prefix, choose mdi.
+// Tailwind utilities applied to icon-only links to make them feel like buttons.
+const BUTTON_CLASSES = [
+  'p-2 rounded no-underline',
+  'text-stone-800 dark:text-stone-200',
+  'hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors',
+].join(' ');
+
+// Normalize role input to "prefix:name", defaulting the prefix to mdi.
 function normalize(raw) {
   const s = raw.trim();
   return s.includes(':') ? s : `${DEFAULT_PREFIX}:${s}`;
@@ -61,46 +76,94 @@ const plugin = {
       name: 'iconify-resolve',
       stage: 'document',
       plugin: (_, utils) => async (tree) => {
-        const nodes = utils.selectAll('iconifyPlaceholder', tree);
-        if (!nodes.length) return;
+        const placeholders = utils.selectAll('iconifyPlaceholder', tree);
+        if (!placeholders.length) return;
 
-        // Fetch each icon only once - if they're in the cache it'll just instantly return.
-        const keys = [...new Set(nodes.map((n) => n.key))];
+        // Fetch each unique icon once (cache hits return immediately).
+        const keys = [...new Set(placeholders.map((n) => n.key))];
         const svgs = {};
         await Promise.all(keys.map(async (k) => { svgs[k] = await fetchIcon(k); }));
 
-        // Replace each placeholder in-place with a styled span node.
-        for (const node of nodes) {
+        for (const node of placeholders) {
           const { key, color } = node;
           const svg = svgs[key];
           Object.keys(node).forEach((k) => delete node[k]);
           if (!svg) {
             console.warn(`⚠️  iconify: could not fetch icon "${key}" - check the name at https://icon-sets.iconify.design`);
             Object.assign(node, { type: 'text', value: `[${key}]` });
-          } else {
-            // If a color was specified, replace currentColor in the SVG before encoding.
-            const finalSvg = color ? svg.replace(/currentColor/g, color) : svg;
-            const dataUri = `data:image/svg+xml;base64,${Buffer.from(finalSvg).toString('base64')}`;
-            Object.assign(node, {
-              // We use a span because image nodes will get styled in weird ways by myst theme
-              type: 'span',
-              class: 'iconify-icon',
-              style: {
-                display: 'inline-block',
-                verticalAlign: '-0.125em',
-                width: '1em',
-                height: '1em',
-                backgroundImage: `url("${dataUri}")`,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-              },
-              children: [],
-            });
+            continue;
+          }
+          const finalSvg = color ? svg.replace(/currentColor/g, color) : svg;
+          Object.assign(node, buildIconNode(key, finalSvg));
+        }
+
+        // Vertically center icons inside any link; promote icon-only links
+        // to button-styled clickable icons.
+        for (const link of utils.selectAll('link', tree)) {
+          const icons = (link.children || []).flatMap(collectIcons);
+          if (!icons.length) continue;
+          for (const icon of icons) {
+            icon.style = { ...icon.style, verticalAlign: 'middle' };
+          }
+          const meaningful = (link.children || []).filter(
+            (c) => !(c.type === 'text' && !c.value?.trim()),
+          );
+          if (meaningful.length === 1 && meaningful[0] === icons[0] && icons.length === 1) {
+            link.class = [link.class, BUTTON_CLASSES].filter(Boolean).join(' ');
+            icons[0].style = { ...icons[0].style, width: '1.5em', height: '1.5em' };
           }
         }
       },
     },
   ],
 };
+
+// Walk an AST node and return any iconify-icon spans inside it.
+function collectIcons(node) {
+  if (!node) return [];
+  if (node.type === 'span' && node.class === 'iconify-icon') return [node];
+  return (node.children || []).flatMap(collectIcons);
+}
+
+function buildIconNode(key, finalSvg) {
+  const dataUri = `data:image/svg+xml;base64,${Buffer.from(finalSvg).toString('base64')}`;
+  const isMono = finalSvg.includes('currentColor');
+  const node = {
+    type: 'span',
+    class: 'iconify-icon',
+    style: {
+      display: 'inline-block',
+      verticalAlign: '-0.125em',
+      width: '1em',
+      height: '1em',
+    },
+    children: [
+      {
+        type: 'image',
+        url: dataUri,
+        alt: key,
+        width: isMono ? '0' : '100%',
+        height: isMono ? '0' : '100%',
+        class: 'not-prose',
+      },
+    ],
+  };
+  if (isMono) {
+    Object.assign(node.style, {
+      backgroundColor: 'currentColor',
+      maskImage: `url("${dataUri}")`,
+      maskSize: 'contain',
+      maskRepeat: 'no-repeat',
+      WebkitMaskImage: `url("${dataUri}")`,
+      WebkitMaskSize: 'contain',
+      WebkitMaskRepeat: 'no-repeat',
+    });
+  } else {
+    // Collapse the phantom line-box that the block <img> would otherwise
+    // create inside the span and push following text down a line.
+    node.style.lineHeight = '0';
+  }
+  return node;
+}
 
 export default plugin;

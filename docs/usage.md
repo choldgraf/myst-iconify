@@ -1,24 +1,38 @@
-# Usage
-
-A role for displaying inline icons from [Iconify](https://iconify.design) - over 200,000 icons from 100+ icon sets.
-
-## The `{icon}` role
+# Use as an author
 
 Use the `{icon}` role with any icon identifier in `prefix:name` format.
 Browse available icons at [icon-sets.iconify.design](https://icon-sets.iconify.design).
 
-### Basic usage
+## Basic usage
+
+The behavior will differ slightly based on whether you wrap the icon in a link.
 
 :::::{myst:demo}
-- {icon}`mdi:home` Home
-- {icon}`mdi:github` GitHub
-- {icon}`mdi:rocket-launch` Launch
-- {icon}`mdi:book-open-variant` Documentation
+Links that only wrap an icon are treated as a link button:
+
+- [{icon}`home`](https://mystmd.org)
+
+Icons with no links are treated as in-line text:
+
+- {icon}`home` Home
+- [{icon}`home` Home](https://mystmd.org)
+
 :::::
 
-### Default prefix
+See the other icons on this page for more examples.
 
-Icons without a prefix default to [Material Design Icons](https://icon-sets.iconify.design/mdi/) (`mdi`), a general-purpose set with ~7,200 icons covering common UI actions, objects, and symbols:
+## Prefix chooses an icon library
+
+The prefix before `:` selects icons from a specific library.
+The default library is `mdi` if none is given.
+Here we'll make the library explicit.
+
+:::::{myst:demo}
+- {icon}`mdi:home`
+- {icon}`lucide:home`
+:::::
+
+Icons without a prefix default to [Material Design Icons](https://icon-sets.iconify.design/mdi/) (`mdi`):
 
 :::::{myst:demo}
 - {icon}`home` Home
@@ -27,10 +41,9 @@ Icons without a prefix default to [Material Design Icons](https://icon-sets.icon
 - {icon}`magnify` Search
 :::::
 
-### Brand logos
+## Brand logos
 
-Brand and project logos are **not** included in the default `mdi` set.
-Use the [`simple-icons`](https://icon-sets.iconify.design/simple-icons/) or [`logos`](https://icon-sets.iconify.design/logos/) prefix instead:
+Use the [`simple-icons`](https://icon-sets.iconify.design/simple-icons/) or [`logos`](https://icon-sets.iconify.design/logos/) prefix for logos:
 
 :::::{myst:demo}
 **Simple Icons** (`simple-icons`) - monochrome brand icons:
@@ -40,7 +53,7 @@ Use the [`simple-icons`](https://icon-sets.iconify.design/simple-icons/) or [`lo
 {icon}`logos:python` {icon}`logos:jupyter` {icon}`logos:react` {icon}`logos:github-icon`
 :::::
 
-### Other popular icon sets
+## Other popular icon sets
 
 :::::{myst:demo}
 **Font Awesome** (`fa6-solid`):
@@ -50,7 +63,7 @@ Use the [`simple-icons`](https://icon-sets.iconify.design/simple-icons/) or [`lo
 {icon}`lucide:rocket` {icon}`lucide:zap` {icon}`lucide:globe` {icon}`lucide:terminal`
 :::::
 
-### Custom colors
+## Custom colors
 
 Use the `color` option to override the icon color. Accepts any CSS color value:
 
@@ -65,72 +78,26 @@ Use the `color` option to override the icon color. Accepts any CSS color value:
 Color only affects mono-color icons (those using `currentColor`). Multi-color icons like `logos:python` have their colors baked in and won't change.
 :::
 
-### Inline in text
+## Add icon links to site parts (e.g. navbar or footer)
 
-:::::{myst:demo}
-Icons render inline: click the {icon}`mdi:cog` settings icon, then look for the {icon}`mdi:shield-check` security tab.
-:::::
+MyST supports [site parts](https://mystmd.org/guide/document-parts) for adding content to theme UI elements like the navigation bar.
+You can use `{icon}` roles in parts just like any other MyST content.
 
-### As linked icons
+For example, this documentation site adds GitHub and npm icon links to the navbar with:
 
-:::::{myst:demo}
-[{icon}`mdi:github` Source code](https://github.com/choldgraf/myst-iconify)
-[{icon}`mdi:book-open-variant` Documentation](https://mystmd.org)
-:::::
+**`myst.yml`:**
 
-## Use from other plugins
-
-Other MyST plugins can use `myst-iconify` to resolve icons without reimplementing the fetching and caching logic. Just emit an `iconifyPlaceholder` node from your plugin's role or directive, and the `myst-iconify` transform will resolve it to an inline image automatically.
-
-The node should look like:
-
-```javascript
-{ type: 'iconifyPlaceholder', key: 'prefix:name' }
+```yaml
+site:
+  parts:
+    navbar_end: parts/navbar_end.md
 ```
 
-For example, this documentation site defines a little demo plugin to create a `check` and `cross` role that uses the `iconify` implementation under the hood. It's used like this:
+**`parts/navbar_end.md`:**
 
-:::::{myst:demo}
-- {check}`Task complete`
-- {cross}`Task failed`
-:::::
-
-Here's the source code for that plugin ([`check-cross-plugin.mjs`](https://github.com/choldgraf/myst-iconify/blob/main/docs/plugins/check-cross-plugin.mjs)):
-
-```javascript
-const plugin = {
-  name: 'Check and Cross Icons',
-  roles: [
-    {
-      name: 'check',
-      doc: 'Green checkmark icon with label text.',
-      body: { type: String, required: true },
-      run(data) {
-        return [
-          { type: 'iconifyPlaceholder', key: 'mdi:check-circle', color: '#4caf50' },
-          { type: 'text', value: ` ${data.body}` },
-        ];
-      },
-    },
-    {
-      name: 'cross',
-      doc: 'Red cross icon with label text.',
-      body: { type: String, required: true },
-      run(data) {
-        return [
-          { type: 'iconifyPlaceholder', key: 'mdi:close-circle', color: '#f44336' },
-          { type: 'text', value: ` ${data.body}` },
-        ];
-      },
-    },
-  ],
-};
-
-export default plugin;
+```markdown
+[{icon}`simple-icons:github`](https://github.com/choldgraf/myst-iconify)
+[{icon}`simple-icons:npm`](https://www.npmjs.com/package/myst-iconify)
 ```
 
-## Notes and gotchas
-
-### Vertical alignment and other visual differences
-
-Icons are rendered at `1em` × `1em` with `vertical-align: -0.125em`, following [Iconify's own inline rendering guidance](https://iconify.design/docs/iconify-icon/inline.html). Because each icon's artwork fills its SVG grid differently, some icons may appear slightly higher or lower than others next to text. This is inherent to the icon designs, so your best bet is to choose icon sets that look good, or write your own CSS to special-case ones that aren't quite right.
+Look at the top-right of this page to see the result.

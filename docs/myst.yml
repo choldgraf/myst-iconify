@@ -6,14 +6,18 @@ project:
   github: https://github.com/choldgraf/myst-iconify
   plugins:
     - ../src/index.mjs
+    # This is for demo-ing how a different plugin could use this plugin
     - ./plugins/check-cross-plugin.mjs
     - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/demo/src/index.mjs
 
   toc:
     - file: index.md
     - file: usage.md
+    - file: plugins.md
 
 site:
   options:
     logo_text: myst-iconify
   template: book-theme
+  parts:
+    navbar_end: parts/navbar_end.md

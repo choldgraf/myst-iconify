@@ -15,9 +15,10 @@ function selectAll(type, tree) {
 }
 const utils = { selectAll };
 
-// Helper to extract the base64 SVG from a span node's backgroundImage style
+// Helper to extract the base64 SVG from the image child's data URI
 function decodeSvg(node) {
-  const match = node.style.backgroundImage.match(/base64,(.+?)"/);
+  const image = node.children.find((c) => c.type === 'image');
+  const match = image.url.match(/base64,(.+)$/);
   return Buffer.from(match[1], 'base64').toString();
 }
 
@@ -52,7 +53,8 @@ describe('iconify-resolve transform', () => {
     await transform.plugin(null, utils)(tree);
     const node = tree.children[0];
     expect(node.type).toBe('span');
-    expect(node.style.backgroundImage).toMatch(/data:image\/svg\+xml;base64,/);
+    const image = node.children.find((c) => c.type === 'image');
+    expect(image.url).toMatch(/^data:image\/svg\+xml;base64,/);
   });
 
   it('falls back to text and warns for invalid icon', async () => {
@@ -92,5 +94,72 @@ describe('iconify-resolve transform', () => {
     await transform.plugin(null, utils)(tree);
     expect(tree.children[0].type).toBe('text');
     expect(tree.children[0].value).toBe('hello');
+  });
+
+  it('renders a mono icon as a CSS mask with a zero-sized <img>', async () => {
+    const tree = {
+      type: 'root',
+      children: [{ type: 'iconifyPlaceholder', key: 'mdi:home' }],
+    };
+    await transform.plugin(null, utils)(tree);
+    const node = tree.children[0];
+    expect(node.style.maskImage).toMatch(/^url\("data:image\/svg\+xml;base64,/);
+    expect(node.style.backgroundColor).toBe('currentColor');
+    const image = node.children.find((c) => c.type === 'image');
+    expect(image.width).toBe('0');
+    expect(image.height).toBe('0');
+  });
+
+  it('renders a colored icon as a plain <img> with no mask', async () => {
+    const tree = {
+      type: 'root',
+      children: [{ type: 'iconifyPlaceholder', key: 'logos:python' }],
+    };
+    await transform.plugin(null, utils)(tree);
+    const node = tree.children[0];
+    expect(node.style.maskImage).toBeUndefined();
+    expect(node.style.backgroundColor).toBeUndefined();
+    const image = node.children.find((c) => c.type === 'image');
+    expect(image.width).toBe('100%');
+    expect(image.height).toBe('100%');
+  });
+
+  it('promotes a link wrapping only an icon to button-styled', async () => {
+    const tree = {
+      type: 'root',
+      children: [
+        {
+          type: 'link',
+          url: 'https://github.com/example',
+          children: [{ type: 'iconifyPlaceholder', key: 'mdi:home' }],
+        },
+      ],
+    };
+    await transform.plugin(null, utils)(tree);
+    const link = tree.children[0];
+    expect(link.class).toContain('rounded');
+    expect(link.class).toContain('hover:bg-stone-200');
+    const icon = link.children[0];
+    expect(icon.style.width).toBe('1.5em');
+    expect(icon.style.verticalAlign).toBe('middle');
+  });
+
+  it('leaves links with mixed icon+text content unstyled', async () => {
+    const tree = {
+      type: 'root',
+      children: [
+        {
+          type: 'link',
+          url: 'https://github.com/example',
+          children: [
+            { type: 'iconifyPlaceholder', key: 'mdi:home' },
+            { type: 'text', value: ' Home' },
+          ],
+        },
+      ],
+    };
+    await transform.plugin(null, utils)(tree);
+    const link = tree.children[0];
+    expect(link.class).toBeUndefined();
   });
 });
